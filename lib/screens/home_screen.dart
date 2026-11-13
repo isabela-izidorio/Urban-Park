@@ -1,9 +1,13 @@
+
 import 'package:flutter/material.dart';
 
 import '../data/parking_data.dart';
+import '../models/app_user.dart';
+import '../services/auth_session.dart';
 import '../theme/app_theme.dart';
 import '../widgets/parking_card.dart';
 import '../widgets/section_title.dart';
+import '../widgets/nearby_parking_map.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,23 +24,51 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (index == 1) {
       Navigator.pushNamed(context, '/form');
-    } else if (index == 2) {
+    }
+
+    if (index == 2) {
       Navigator.pushNamed(context, '/profile');
     }
   }
 
+  void _logout() {
+    AuthSession.end();
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/',
+      (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final AppUser? user = AuthSession.currentUser;
+
+    if (user == null || user.role != UserRole.standard) {
+      return Scaffold(
+        body: Center(
+          child: ElevatedButton(
+            onPressed: _logout,
+            child: const Text('Voltar ao login'),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Olá, motorista!',
-              style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+              'Olá, ${user.name}!',
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppTheme.textSecondary,
+              ),
             ),
-            Text(
+            const Text(
               'Encontre sua vaga',
               style: TextStyle(
                 fontSize: 20,
@@ -48,13 +80,19 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () => Navigator.pushNamed(context, '/profile'),
-            icon: const Icon(Icons.notifications_none),
+            onPressed: () {
+              Navigator.pushNamed(context, '/profile');
+            },
+            icon: const Icon(Icons.person_outline),
+          ),
+          IconButton(
+            tooltip: 'Sair',
+            onPressed: _logout,
+            icon: const Icon(Icons.logout),
           ),
         ],
       ),
 
-      // DRAWER: recurso Material adicional.
       drawer: Drawer(
         child: SafeArea(
           child: Column(
@@ -62,17 +100,17 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
-
-                // BACKGROUND DO CABEÇALHO DO DRAWER:
-                // Altere aqui a cor azul do menu lateral.
                 color: AppTheme.primary,
-
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.local_parking, color: Colors.white, size: 42),
-                    SizedBox(height: 10),
-                    Text(
+                    const Icon(
+                      Icons.local_parking,
+                      color: Colors.white,
+                      size: 42,
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
                       'Urban Park',
                       style: TextStyle(
                         color: Colors.white,
@@ -80,14 +118,25 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      user.name,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      user.email,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
                   ],
                 ),
               ),
+
               ListTile(
                 leading: const Icon(Icons.home_outlined),
                 title: const Text('Início'),
                 onTap: () => Navigator.pop(context),
               ),
+
               ListTile(
                 leading: const Icon(Icons.directions_car_outlined),
                 title: const Text('Cadastrar veículo'),
@@ -96,6 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.pushNamed(context, '/form');
                 },
               ),
+
               ListTile(
                 leading: const Icon(Icons.person_outline),
                 title: const Text('Perfil'),
@@ -103,6 +153,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.pop(context);
                   Navigator.pushNamed(context, '/profile');
                 },
+              ),
+
+              const Spacer(),
+
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Sair da conta'),
+                onTap: _logout,
               ),
             ],
           ),
@@ -112,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final int columns = constraints.maxWidth >= 900 ? 2 : 1;
+            final columns = constraints.maxWidth >= 900 ? 2 : 1;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -122,14 +180,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(22),
-
-                    // BACKGROUND DO BANNER PRINCIPAL:
-                    // Altere aqui a cor de fundo do banner "Encontre sua vaga".
                     decoration: BoxDecoration(
                       color: AppTheme.primary,
                       borderRadius: BorderRadius.circular(24),
                     ),
-
                     child: const Row(
                       children: [
                         Expanded(
@@ -163,8 +217,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 28),
-                  const SectionTitle(title: 'Zonas próximas'),
+
+                  const SizedBox(height: 25),
+
+                  const SectionTitle(
+                    title: 'Estacionamentos no mapa',
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  const NearbyParkingMap(),
+
+                  const SizedBox(height: 26),
+
+                  const SectionTitle(
+                    title: 'Zonas próximas',
+                  ),
+
                   const SizedBox(height: 14),
 
                   if (columns == 1)
@@ -189,14 +258,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 2.1,
-                          ),
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 2.1,
+                      ),
                       itemCount: ParkingData.zones.length,
-                      itemBuilder: (_, index) {
-                        final zone = ParkingData.zones[index];
+                      itemBuilder: (_, i) {
+                        final zone = ParkingData.zones[i];
+
                         return ParkingCard(
                           zone: zone,
                           onTap: () {
@@ -217,7 +287,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/form'),
+        onPressed: () {
+          Navigator.pushNamed(context, '/form');
+        },
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),

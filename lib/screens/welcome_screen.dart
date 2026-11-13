@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -25,24 +26,15 @@ class WelcomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
-                        flex: landscape ? 5 : 0,
-                        child: Container(
+                        flex: landscape ? 6 : 0,
+                        child: SizedBox(
                           width: double.infinity,
-                          height: landscape ? 260 : 300,
-
-                          // BACKGROUND DA ILUSTRAÇÃO DA TELA INICIAL:
-                          // Altere este Container para mudar a área azul.
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary,
-                            borderRadius: BorderRadius.circular(32),
-                          ),
-
-                          child: const Center(
-                            child: Image.asset(
-                              'assets/urban_park_logo.png'
-                              width: 280,
-                              fit: BoxFit.contain,
-                            ),
+                          height: landscape ? 400 : 300,
+                          child: Image.asset(
+                            'assets/urban_park_logo.png',
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.contain,
                           ),
                         ),
                       ),
@@ -51,7 +43,7 @@ class WelcomeScreen extends StatelessWidget {
                         height: landscape ? 0 : 32,
                       ),
                       Expanded(
-                        flex: landscape ? 5 : 0,
+                        flex: landscape ? 4 : 0,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -97,3 +89,4 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 }
+
